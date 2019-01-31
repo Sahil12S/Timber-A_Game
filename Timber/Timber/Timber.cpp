@@ -12,6 +12,11 @@ using namespace sf;
 // Function declaration
 void updateBranches(int seed);
 
+// Number of clouds
+const int NUM_CLOUDS = 3;
+Sprite spriteCloud[NUM_CLOUDS];
+
+// Number of branches
 const int NUM_BRANCHES = 6;
 Sprite branches[NUM_BRANCHES];
 
@@ -40,6 +45,8 @@ int main()
 	* End of low resolution code.
 	*/
 
+	const float SCALE_FACTOR_X = 0.6;
+	const float SCALE_FACTOR_Y = 0.8;
 
 	// Create texture to hold a graphic on the GPU.
 	Texture textureBackgroud;
@@ -52,12 +59,11 @@ int main()
 
 	// Attach texture to the sprite object.
 	spriteBackground.setTexture(textureBackgroud);
+	spriteBackground.scale(Vector2f(0.75, 0.7));
 
 	// Set the spriteBackground to cover screen.
 	spriteBackground.setPosition(0, 0);
 
-	const float SCALE_FACTOR_X = 0.6;
-	const float SCALE_FACTOR_Y = 0.8;
 
 	// Make Tree sprite.
 	Texture textureTree;
@@ -82,6 +88,18 @@ int main()
 	// Add few clouds
 	Texture textureCloud;
 	textureCloud.loadFromFile("graphics/cloud.png");
+
+	bool cloudActive[NUM_CLOUDS];
+	float cloudSpeed[NUM_CLOUDS];
+
+	for (int i = 0; i < NUM_CLOUDS; ++i) {
+		spriteCloud[i].setTexture(textureCloud);
+		spriteCloud[i].scale(Vector2f(0.7, 0.7));
+		spriteCloud[i].setPosition(0, i * 100);
+		cloudActive[i] = false;
+		cloudSpeed[i] = 0.0f;
+	}
+	/*
 	// Add 3 sprites from same texture.
 	Sprite spriteCloud1;
 	Sprite spriteCloud2;
@@ -101,13 +119,13 @@ int main()
 	float cloud1Speed = 0.0f;
 	float cloud2Speed = 0.0f;
 	float cloud3Speed = 0.0f;
-
+	*/
 	// Variables to control time itself.
 	Clock clock;
 
 	// Time bar
 	RectangleShape timeBar;
-	float timeBarStartWidth = 900;
+	float timeBarStartWidth = 500;
 	float timeBarHeight = 30;
 	timeBar.setSize(Vector2f(timeBarStartWidth, timeBarHeight));
 	timeBar.setFillColor(Color::Red);
@@ -124,6 +142,7 @@ int main()
 
 	sf::Text messageText;
 	sf::Text scoreText;
+	sf::Text fpsText;
 
 	// We need to choose a font
 	sf::Font font;
@@ -132,18 +151,22 @@ int main()
 	// Set the font to our message
 	messageText.setFont(font);
 	scoreText.setFont(font);
+	fpsText.setFont(font);
 
 	// Assign the actual message
 	messageText.setString("Press Enter to start!");
 	scoreText.setString("Score = 0");
+	fpsText.setString("FPS: 0");
 
 	// Make it really big
 	messageText.setCharacterSize(50);
 	scoreText.setCharacterSize(70);
+	fpsText.setCharacterSize(70);
 
 	// Choose a color
 	messageText.setFillColor(Color::White);
 	scoreText.setFillColor(Color::White);
+	fpsText.setFillColor(Color::White);
 
 	// Position the text
 	FloatRect textRect = messageText.getLocalBounds();
@@ -156,8 +179,20 @@ int main()
 	messageText.setPosition(1366 / 2.0f, 768 / 2.0f);
 
 	scoreText.setPosition(20, 20);
+	fpsText.setPosition(1000, 20);
 
-	
+	// Background for the text
+	RectangleShape rect1;
+	rect1.setFillColor(sf::Color(0, 0, 0, 150));
+	rect1.setSize(Vector2f(450, 120));
+	rect1.setPosition(0, 10);
+
+	RectangleShape rect2;
+	rect2.setFillColor(sf::Color(0, 0, 0, 150));
+	rect2.setSize(Vector2f(450, 120));
+	rect2.setPosition(970, 10);
+
+
 	// Prepare 5 branches
 	Texture textureBranch;
 	textureBranch.loadFromFile("graphics/branch.png");
@@ -233,11 +268,12 @@ int main()
 
 	// Out of time
 	SoundBuffer timeoutBuffer;
-	timeoutBuffer.loadFromFile("sound/out_of_time+.wav");
+	timeoutBuffer.loadFromFile("sound/out_of_time.wav");
 	Sound outOfTime;
 	outOfTime.setBuffer(timeoutBuffer);
 
-
+	// Control the drawing of score
+	int lastDrawn = 0;
 
 	// Main Game Loop
 	while (window.isOpen()) {
@@ -415,6 +451,34 @@ int main()
 			}
 
 			// Move the clouds
+
+			for (int i = 0; i < NUM_CLOUDS; ++i) {
+				if (!cloudActive[i]) {
+
+					// How fast is the cloud
+					srand((int)time(0) * (10 * (i + 1)));
+					cloudSpeed[i] = (rand() % 200);
+
+					// How high is the cloud?
+					srand((int)time(0) * 10);
+					float height = (rand() % (150 * (i + 1))) - 50 * i;
+					spriteCloud[i].setPosition(-200, height);
+					cloudActive[i] = true;
+				}
+				else {
+					spriteCloud[i].setPosition(
+						spriteCloud[i].getPosition().x +
+						(cloudSpeed[i] * dt.asSeconds()),
+						spriteCloud[i].getPosition().y);
+
+					// Has the cloud reached right end of screen
+					if (spriteCloud[i].getPosition().x > 1400) {
+						// Set it up ready to be a whole new cloud in next frame.
+						cloudActive[i] = false;
+					}
+				}
+			}
+			/*
 			// Cloud 1
 			if (!cloud1Active) {
 
@@ -492,11 +556,21 @@ int main()
 					cloud3Active = false;
 				}
 			}
+			*/
+			//  Draw score and frame rate once every 100 frames
+			lastDrawn++;
+			if (lastDrawn == 50) {
+				// Update the score text
+				std::stringstream ss;
+				ss << "Score = " << score;
+				scoreText.setString(ss.str());
 
-			// Update the score text
-			std::stringstream ss;
-			ss << "Score = " << score;
-			scoreText.setString(ss.str());
+				// Draw fps
+				std::stringstream ss2;
+				ss2 << "FPS: " << (int)(1 / dt.asSeconds());
+				fpsText.setString(ss2.str());
+				lastDrawn = 0;
+			}
 
 
 			// update the branch sprites
@@ -589,9 +663,13 @@ int main()
 		window.draw(spriteBackground);
 
 		// Draw clouds.
+		for (Sprite cloud : spriteCloud) {
+			window.draw(cloud);
+		}
+		/*
 		window.draw(spriteCloud1);
 		window.draw(spriteCloud2);
-		window.draw(spriteCloud3);
+		window.draw(spriteCloud3);*/
 
 		// Draw the branches
 		for (int i = 0; i < NUM_BRANCHES; i++) {
@@ -616,8 +694,15 @@ int main()
 		// Draw the bee.
 		window.draw(spriteBee);
 
+		// Draw rectangle for text
+		window.draw(rect1);
+		window.draw(rect2);
+
 		// Draw the score
 		window.draw(scoreText);
+		
+		// Draw the fps
+		window.draw(fpsText);
 
 		// Draw the timebar
 		window.draw(timeBar);
