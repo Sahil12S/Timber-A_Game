@@ -55,14 +55,17 @@ int main()
 	// Set the spriteBackground to cover screen.
 	spriteBackground.setPosition(0, 0);
 
+	const float SCALE_FACTOR_X = 0.6;
+	const float SCALE_FACTOR_Y = 0.8;
+
 	// Make Tree sprite.
 	Texture textureTree;
 	textureTree.loadFromFile("graphics/tree.png");
 	Sprite spriteTree;
 	spriteTree.setTexture(textureTree);
 	// Reduce width of tree.
-	spriteTree.scale(Vector2f(0.6, 1));
-	spriteTree.setPosition(600, -170);
+	spriteTree.scale(Vector2f(SCALE_FACTOR_X, SCALE_FACTOR_Y));
+	spriteTree.setPosition(600, 0);
 
 	// Prepare the bee.
 	Texture textureBee;
@@ -107,7 +110,7 @@ int main()
 	float timeBarHeight = 30;
 	timeBar.setSize(Vector2f(timeBarStartWidth, timeBarHeight));
 	timeBar.setFillColor(Color::Red);
-	timeBar.setPosition((1366 / 2) - timeBarStartWidth / 2, 690);
+	timeBar.setPosition((1366 / 2) - timeBarStartWidth / 2, 720);
 
 	Time gameTimeTotal;
 	float timeRemaining = 6.0f;
@@ -161,12 +164,57 @@ int main()
 	// Set the texture for each branch sprite
 	for (int i = 0; i < NUM_BRANCHES; i++) {
 		branches[i].setTexture(textureBranch);
+		branches[i].scale(Vector2f(SCALE_FACTOR_X, SCALE_FACTOR_Y));
 		branches[i].setPosition(-2000, -2000);
 
 		// Set the sprite's origin to dead centre
 		// We can then spin it round without changing its position
-		branches[i].setOrigin(220, 20);
+		branches[i].setOrigin(300, 20);
 	}
+
+	// Prepare the player
+	Texture texturePlayer;
+	texturePlayer.loadFromFile("graphics/player.png");
+	Sprite spritePlayer;
+	spritePlayer.setTexture(texturePlayer);
+	spritePlayer.scale(Vector2f(SCALE_FACTOR_X, SCALE_FACTOR_Y));
+	spritePlayer.setPosition(450, 600);
+
+	// The player starts on left
+	side playerSide = side::LEFT;
+
+	// Prepare the gravestone
+	Texture textureRIP;
+	textureRIP.loadFromFile("graphics/rip.png");
+	Sprite spriteRIP;
+	spriteRIP.setTexture(textureRIP);
+	spriteRIP.scale(Vector2f(SCALE_FACTOR_X, SCALE_FACTOR_Y));
+	spriteRIP.setPosition(500, 660);
+
+	// Prepare the axe
+	Texture textureAxe;
+	textureAxe.loadFromFile("graphics/axe.png");
+	Sprite spriteAxe;
+	spriteAxe.setTexture(textureAxe);
+	spriteAxe.scale(Vector2f(SCALE_FACTOR_X, SCALE_FACTOR_Y));
+	spriteAxe.setPosition(510, 660);
+
+	// Line the axe up with the tree.
+	const float AXE_POSITION_LEFT = 420;
+	const float AXE_POSITION_RIGHT = 850;
+
+	// Prepare flying log
+	Texture textureLog;
+	textureLog.loadFromFile("graphics/log.png");
+	Sprite spriteLog;
+	spriteLog.setTexture(textureLog);
+	spriteLog.scale(Vector2f(SCALE_FACTOR_X, SCALE_FACTOR_Y));
+	spriteLog.setPosition(600, 600);
+
+	// Some other useful log related variables
+	bool logActive = false;
+	float logSpeedX = 1000;
+	float logSpeedY = -1500;
 
 	updateBranches(1);
 	updateBranches(2);
@@ -353,14 +401,14 @@ int main()
 				if (branchPositions[i] == side::LEFT)
 				{
 					// Move the sprite to the left side
-					branches[i].setPosition(400, height);
+					branches[i].setPosition(420, height);
 					// Flip the sprite round the other way
 					branches[i].setRotation(180);
 				}
 				else if (branchPositions[i] == side::RIGHT)
 				{
 					// Move the sprite to the right side
-					branches[i].setPosition(970, height);
+					branches[i].setPosition(950, height);
 					// Set the sprite rotation to normal
 					branches[i].setRotation(0);
 
@@ -398,6 +446,18 @@ int main()
 
 		// Draw the tree.
 		window.draw(spriteTree);
+
+		// Draw the player
+		window.draw(spritePlayer);
+
+		// Draw the axe
+		window.draw(spriteAxe);
+		
+		// Draw the flying
+		window.draw(spriteLog);
+
+		// Draw the gravestone
+		window.draw(spriteRIP);
 
 		// Draw the bee.
 		window.draw(spriteBee);
