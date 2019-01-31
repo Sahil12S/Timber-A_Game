@@ -1,4 +1,4 @@
-// HelloSFML.cpp : This file contains the 'main' function. Program execution begins and ends there.
+// Timber.cpp : This file contains the 'main' function. Program execution begins and ends there.
 //
 
 #include "pch.h"
@@ -7,6 +7,18 @@
 #include <SFML/Graphics.hpp>
 
 using namespace sf;
+
+// Function declaration
+void updateBranches(int seed);
+
+const int NUM_BRANCHES = 6;
+Sprite branches[NUM_BRANCHES];
+
+// Where is the player/branch? 
+// Left or Right
+enum class side { LEFT, RIGHT, NONE };
+side branchPositions[NUM_BRANCHES];
+
 
 int main()
 {
@@ -48,7 +60,9 @@ int main()
 	textureTree.loadFromFile("graphics/tree.png");
 	Sprite spriteTree;
 	spriteTree.setTexture(textureTree);
-	spriteTree.setPosition(560, -170);
+	// Reduce width of tree.
+	spriteTree.scale(Vector2f(0.6, 1));
+	spriteTree.setPosition(600, -170);
 
 	// Prepare the bee.
 	Texture textureBee;
@@ -139,7 +153,26 @@ int main()
 
 	scoreText.setPosition(20, 20);
 
+	
+	// Prepare 5 branches
+	Texture textureBranch;
+	textureBranch.loadFromFile("graphics/branch.png");
 
+	// Set the texture for each branch sprite
+	for (int i = 0; i < NUM_BRANCHES; i++) {
+		branches[i].setTexture(textureBranch);
+		branches[i].setPosition(-2000, -2000);
+
+		// Set the sprite's origin to dead centre
+		// We can then spin it round without changing its position
+		branches[i].setOrigin(220, 20);
+	}
+
+	updateBranches(1);
+	updateBranches(2);
+	updateBranches(3);
+	updateBranches(4);
+	updateBranches(5);
 
 	// Main Game Loop
 	while (window.isOpen()) {
@@ -310,7 +343,35 @@ int main()
 			ss << "Score = " << score;
 			scoreText.setString(ss.str());
 
-		}
+
+			// update the branch sprites
+			for (int i = 0; i < NUM_BRANCHES; i++)
+			{
+
+				float height = i * 110;
+
+				if (branchPositions[i] == side::LEFT)
+				{
+					// Move the sprite to the left side
+					branches[i].setPosition(400, height);
+					// Flip the sprite round the other way
+					branches[i].setRotation(180);
+				}
+				else if (branchPositions[i] == side::RIGHT)
+				{
+					// Move the sprite to the right side
+					branches[i].setPosition(970, height);
+					// Set the sprite rotation to normal
+					branches[i].setRotation(0);
+
+				}
+				else
+				{
+					// Hide the branch
+					branches[i].setPosition(3000, height);
+				}
+			}
+		} /*END IF*/
 
 
 		/*
@@ -329,6 +390,11 @@ int main()
 		window.draw(spriteCloud1);
 		window.draw(spriteCloud2);
 		window.draw(spriteCloud3);
+
+		// Draw the branches
+		for (int i = 0; i < NUM_BRANCHES; i++) {
+			window.draw(branches[i]);
+		}
 
 		// Draw the tree.
 		window.draw(spriteTree);
@@ -355,5 +421,36 @@ int main()
 	}
 
 	return 0;
+
+}
+
+
+// Function definition
+void updateBranches(int seed)
+{
+	// Move all the branches down one place
+	for (int j = NUM_BRANCHES - 1; j > 0; j--) {
+		branchPositions[j] = branchPositions[j - 1];
+	}
+
+	// Spawn a new branch at position 0
+	// LEFT, RIGHT or NONE
+	srand((int)time(0) + seed);
+	int r = (rand() % 5);
+
+	switch (r) {
+	case 0:
+		branchPositions[0] = side::LEFT;
+		break;
+
+	case 1:
+		branchPositions[0] = side::RIGHT;
+		break;
+
+	default:
+		branchPositions[0] = side::NONE;
+		break;
+	}
+
 
 }
